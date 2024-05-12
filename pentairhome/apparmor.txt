@@ -28,9 +28,9 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
   /data/** rw,
 
   # Start new profile for service
-  /usr/bin/pentairhome cx -> pentairhome,
+  /usr/bin/pentairhome cx -> pentairhomesvc,
 
-  profile pentairhome flags=(attach_disconnected,mediate_deleted) {
+  profile pentairhomesvc flags=(attach_disconnected,mediate_deleted) {
     #include <abstractions/base>
 
     # Receive signals from S6-Overlay
@@ -43,7 +43,7 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
     /share/** rw,
 
     # Access required for service functionality
-    /usr/bin/pentairhome r,
+    /usr/bin/pentairhome rm,
     /bin/bash rix,
     /bin/echo ix,
     /etc/passwd r,
