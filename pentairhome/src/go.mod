@@ -9,10 +9,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.37.0
 )
 
-require golang.org/x/net v0.23.0 // indirect
+require (
+	github.com/gorilla/websocket v1.5.1 // indirect
+	golang.org/x/net v0.23.0 // indirect
+)
 
 require (
-	github.com/at-wat/mqtt-go v0.19.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.5 // indirect

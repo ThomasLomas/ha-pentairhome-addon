@@ -36,13 +36,7 @@ func main() {
 	identity := cognito.AuthenticateWithUsernameAndPassword(ctx, runtimeConfiguration.PentairHomeUsername, runtimeConfiguration.PentairHomePassword)
 	credentials := cognito.GetCredentialsFromAuthentication(ctx, identity)
 
-	apiClient := api.APIClient{
-		Context:      ctx,
-		IDToken:      identity.IdToken,
-		AccessKeyId:  credentials.AccessKeyId,
-		SecretKey:    credentials.SecretKey,
-		SessionToken: credentials.SessionToken,
-	}
+	apiClient := api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
 
 	devices := apiClient.ListDevices()
 
@@ -58,14 +52,13 @@ func main() {
 	sendSensorConfig(mqttClient, device)
 
 	sendSensorData(mqttClient, device)
-	pollSensorData(mqttClient, apiClient, device.DeviceID)
+	pollSensorData(ctx, mqttClient, apiClient, device.DeviceID)
 
 	<-mqttClient.Client.Done() // Wait for clean shutdown (cancelling the context triggered the shutdown)
 }
 
-func pollSensorData(mqttClient mqtt.MQTTWrapper, apiClient api.APIClient, deviceId string) {
+func pollSensorData(ctx context.Context, mqttClient mqtt.MQTTWrapper, apiClient *api.APIClient, deviceId string) {
 	ticker := time.NewTicker(60 * time.Second)
-	quit := make(chan struct{})
 
 	go func() {
 		for {
@@ -73,7 +66,8 @@ func pollSensorData(mqttClient mqtt.MQTTWrapper, apiClient api.APIClient, device
 			case <-ticker.C:
 				device := apiClient.GetDevice(deviceId)
 				sendSensorData(mqttClient, device)
-			case <-quit:
+			case <-ctx.Done():
+				log.Println("Shutting down sensor data polling")
 				ticker.Stop()
 				return
 			}

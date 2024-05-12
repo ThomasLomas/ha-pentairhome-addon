@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
+	"net/url"
 
+	"github.com/eclipse/paho.golang/autopaho"
 	"github.com/eclipse/paho.golang/paho"
 )
 
@@ -17,12 +18,8 @@ type MQTTConfig struct {
 	Password string
 }
 
-func (c *MQTTConfig) GetServer() string {
-	return fmt.Sprintf("%s:%s", c.Host, c.Port)
-}
-
 type MQTTWrapper struct {
-	Client  *paho.Client
+	Client  *autopaho.ConnectionManager
 	Context context.Context
 }
 
@@ -39,43 +36,35 @@ func (mqttWrapper *MQTTWrapper) Publish(topic string, payload []byte) {
 func MakeClient(config MQTTConfig) MQTTWrapper {
 	log.Printf("MQTT Host: %s; Port: %s; Username: %s", config.Host, config.Port, config.Username)
 
-	conn, err := net.Dial("tcp", config.GetServer())
+	u, err := url.Parse(fmt.Sprintf("mqtt://%s:%s", config.Host, config.Port))
+	if err != nil {
+		panic(err)
+	}
+
+	cliCfg := autopaho.ClientConfig{
+		ServerUrls:                    []*url.URL{u},
+		KeepAlive:                     20,
+		CleanStartOnInitialConnection: true,
+		SessionExpiryInterval:         60,
+		OnConnectError:                func(err error) { log.Printf("error whilst attempting connection: %s\n", err) },
+		ClientConfig: paho.ClientConfig{
+			ClientID: "pentairhome",
+		},
+		ConnectUsername: config.Username,
+		ConnectPassword: []byte(config.Password),
+	}
+
+	c, err := autopaho.NewConnection(config.Context, cliCfg)
 
 	if err != nil {
-		log.Fatalf("Failed to connect to %s: %s", config.GetServer(), err)
+		log.Fatalf("failed to create connection: %s", err)
 	}
 
-	c := paho.NewClient(paho.ClientConfig{
-		Conn: conn,
-	})
-
-	cp := &paho.Connect{
-		KeepAlive:  30,
-		ClientID:   "pentairhome",
-		CleanStart: true,
-		Username:   config.Username,
-		Password:   []byte(config.Password),
+	if err = c.AwaitConnection(config.Context); err != nil {
+		log.Fatalf("failed to connect: %s", err)
 	}
 
-	if config.Username != "" {
-		cp.UsernameFlag = true
-	}
-
-	if config.Password != "" {
-		cp.PasswordFlag = true
-	}
-
-	ca, err := c.Connect(config.Context, cp)
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	if ca.ReasonCode != 0 {
-		log.Fatalf("Failed to connect to %s : %d - %s", config.GetServer(), ca.ReasonCode, ca.Properties.ReasonString)
-	}
-
-	fmt.Printf("Connected to %s\n", config.GetServer())
+	fmt.Printf("Connected to %s\n", u)
 
 	return MQTTWrapper{
 		Client:  c,
