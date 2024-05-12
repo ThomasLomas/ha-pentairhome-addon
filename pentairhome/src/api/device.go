@@ -80,9 +80,6 @@ func (client APIClient) GetDevice(deviceId string) Device {
 	jsonData, _ := json.Marshal(deviceRequest)
 	body := client.MakeRequest("device2/device2-service/user/device", "POST", bytes.NewBuffer(jsonData))
 
-	// log the response body
-	// fmt.Println(string(body))
-
 	var result DeviceResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer
 		log.Fatalf("failed to unmarshal device response: %s", err)

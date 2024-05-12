@@ -51,13 +51,7 @@ func NewAPIClient(ctx context.Context, idToken, accessKey, secretKey, sessionTok
 		CredsCache:   credsCache,
 	}
 }
-
-type RequestOptions struct {
-	MaxRetries int
-	RetryCount int
-}
-
-func (client APIClient) MakeRequest(endpoint, method string, body io.Reader, options ...RequestOptions) []byte {
+func (client APIClient) MakeRequest(endpoint, method string, body io.Reader) []byte {
 	url := fmt.Sprintf("%s%s", urlBase, endpoint)
 	req, err := http.NewRequest(method, url, body)
 
