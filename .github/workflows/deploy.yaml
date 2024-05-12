@@ -169,91 +169,91 @@ jobs:
           docker push \
             "ghcr.io/${{ env.OWNER_LC }}/${{ needs.information.outputs.slug }}/${{ matrix.architecture }}:${{ needs.information.outputs.version }}"
 
-  publish-edge:
-    name: 📢 Publish to edge repository
-    if: needs.information.outputs.environment == 'edge'
-    needs:
-      - information
-      - deploy
-    environment:
-      name: ${{ needs.information.outputs.environment }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: set lower case owner name
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-      - name: 🚀 Dispatch repository updater update signal
-        uses: peter-evans/repository-dispatch@v3.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ env.OWNER_LC }}/repository-edge
-          event-type: update
-          client-payload: >
-            {
-              "addon": "${{ needs.information.outputs.slug }}",
-              "name": "${{ needs.information.outputs.name }}",
-              "repository": "${{ github.repository }}",
-              "version": "${{ needs.information.outputs.version }}"
-            }
+  # publish-edge:
+  #   name: 📢 Publish to edge repository
+  #   if: needs.information.outputs.environment == 'edge'
+  #   needs:
+  #     - information
+  #     - deploy
+  #   environment:
+  #     name: ${{ needs.information.outputs.environment }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: set lower case owner name
+  #       run: |
+  #         echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+  #       env:
+  #         OWNER: '${{ github.repository_owner }}'
+  #     - name: 🚀 Dispatch repository updater update signal
+  #       uses: peter-evans/repository-dispatch@v3.0.0
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         repository: ${{ env.OWNER_LC }}/repository-edge
+  #         event-type: update
+  #         client-payload: >
+  #           {
+  #             "addon": "${{ needs.information.outputs.slug }}",
+  #             "name": "${{ needs.information.outputs.name }}",
+  #             "repository": "${{ github.repository }}",
+  #             "version": "${{ needs.information.outputs.version }}"
+  #           }
 
-  publish-beta:
-    name: 📢 Publish to beta repository
-    if: |
-      needs.information.outputs.environment == 'beta' ||
-      needs.information.outputs.environment == 'stable'
-    needs:
-      - information
-      - deploy
-    environment:
-      name: ${{ needs.information.outputs.environment }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: set lower case owner name
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-      - name: 🚀 Dispatch repository updater update signal
-        uses: peter-evans/repository-dispatch@v3.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ env.OWNER_LC }}/repository-beta
-          event-type: update
-          client-payload: >
-            {
-              "addon": "${{ needs.information.outputs.slug }}",
-              "name": "${{ needs.information.outputs.name }}",
-              "repository": "${{ github.repository }}",
-              "version": "${{ github.event.release.tag_name }}"
-            }
+  # publish-beta:
+  #   name: 📢 Publish to beta repository
+  #   if: |
+  #     needs.information.outputs.environment == 'beta' ||
+  #     needs.information.outputs.environment == 'stable'
+  #   needs:
+  #     - information
+  #     - deploy
+  #   environment:
+  #     name: ${{ needs.information.outputs.environment }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: set lower case owner name
+  #       run: |
+  #         echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+  #       env:
+  #         OWNER: '${{ github.repository_owner }}'
+  #     - name: 🚀 Dispatch repository updater update signal
+  #       uses: peter-evans/repository-dispatch@v3.0.0
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         repository: ${{ env.OWNER_LC }}/repository-beta
+  #         event-type: update
+  #         client-payload: >
+  #           {
+  #             "addon": "${{ needs.information.outputs.slug }}",
+  #             "name": "${{ needs.information.outputs.name }}",
+  #             "repository": "${{ github.repository }}",
+  #             "version": "${{ github.event.release.tag_name }}"
+  #           }
 
-  publish-stable:
-    name: 📢 Publish to stable repository
-    if: needs.information.outputs.environment == 'stable'
-    needs:
-      - information
-      - deploy
-    environment:
-      name: ${{ needs.information.outputs.environment }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: set lower case owner name
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-      - name: 🚀 Dispatch repository updater update signal
-        uses: peter-evans/repository-dispatch@v3.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ env.OWNER_LC }}/repository
-          event-type: update
-          client-payload: >
-            {
-              "addon": "${{ needs.information.outputs.slug }}",
-              "name": "${{ needs.information.outputs.name }}",
-              "repository": "${{ github.repository }}",
-              "version": "${{ github.event.release.tag_name }}"
-            }
+  # publish-stable:
+  #   name: 📢 Publish to stable repository
+  #   if: needs.information.outputs.environment == 'stable'
+  #   needs:
+  #     - information
+  #     - deploy
+  #   environment:
+  #     name: ${{ needs.information.outputs.environment }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: set lower case owner name
+  #       run: |
+  #         echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+  #       env:
+  #         OWNER: '${{ github.repository_owner }}'
+  #     - name: 🚀 Dispatch repository updater update signal
+  #       uses: peter-evans/repository-dispatch@v3.0.0
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         repository: ${{ env.OWNER_LC }}/repository
+  #         event-type: update
+  #         client-payload: >
+  #           {
+  #             "addon": "${{ needs.information.outputs.slug }}",
+  #             "name": "${{ needs.information.outputs.name }}",
+  #             "repository": "${{ github.repository }}",
+  #             "version": "${{ github.event.release.tag_name }}"
+  #           }
