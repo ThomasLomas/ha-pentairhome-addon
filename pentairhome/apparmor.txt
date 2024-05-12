@@ -51,6 +51,8 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
     /usr/bin/pentairhome rm,
     /etc/resolv.conf r,
     /etc/hosts r,
+    /etc/ssl/certs/*.crt r,
+    /etc/nsswitch.conf r,
 
     /lib/ld-musl* rix,
     /bin/bash rix,
