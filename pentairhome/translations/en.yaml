@@ -1,3 +1,4 @@
+---
 configuration:
   mqtt_host:
     name: "MQTT Hostname"
