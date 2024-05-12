@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"pentairhome/config"
 	"time"
@@ -43,7 +44,7 @@ func (client APIClient) MakeRequest(endpoint string, method string, body io.Read
 	awscred, err := creds.Retrieve(client.Context)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to retrieve credentials: %s", err)
 	}
 
 	req.Header.Set("x-amz-id-token", *client.IDToken)
@@ -53,7 +54,7 @@ func (client APIClient) MakeRequest(endpoint string, method string, body io.Read
 	signer := v4.NewSigner()
 	contentHash := getPayloadHash(req)
 	if err := signer.SignHTTP(client.Context, awscred, req, contentHash, "execute-api", config.AWSRegion, time.Now()); err != nil {
-		panic(fmt.Sprintf("aws signer: failed to sign request: %s", err))
+		log.Fatalf("failed to sign request: %s", err)
 	}
 	resp, _ := httpClient.Do(req)
 	b, _ := io.ReadAll(resp.Body)

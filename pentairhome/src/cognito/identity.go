@@ -2,6 +2,7 @@ package cognito
 
 import (
 	"context"
+	"log"
 	"pentairhome/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,7 +31,7 @@ func GetCredentialsFromAuthentication(ctx context.Context, authenticationResult 
 	})
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to get id: %s", err)
 	}
 
 	credsRes, err := cognitoIdentityService.GetCredentialsForIdentity(ctx, &ci.GetCredentialsForIdentityInput{
@@ -39,7 +40,7 @@ func GetCredentialsFromAuthentication(ctx context.Context, authenticationResult 
 	})
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to get credentials: %s", err)
 	}
 
 	return credsRes.Credentials

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 )
 
 type ListDevice struct {
@@ -30,7 +31,7 @@ func (client APIClient) ListDevices() []ListDevice {
 
 	var result ListDevicesResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer
-		panic("Can not unmarshal ListDevicesResponse JSON")
+		log.Fatalf("failed to unmarshal list devices response: %s", err)
 	}
 
 	return result.Response

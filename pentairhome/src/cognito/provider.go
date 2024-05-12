@@ -2,6 +2,7 @@ package cognito
 
 import (
 	"context"
+	"log"
 	"pentairhome/config"
 	"time"
 
@@ -38,11 +39,11 @@ func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password
 	})
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to initiate auth: %s", err)
 	}
 
 	if authResp.ChallengeName != types.ChallengeNameTypePasswordVerifier {
-		panic("unexpected challenge")
+		log.Fatalf("unexpected challenge name: %s", authResp.ChallengeName)
 	}
 
 	challengeResponses, _ := csrp.PasswordVerifierChallenge(authResp.ChallengeParameters, time.Now())
@@ -54,7 +55,7 @@ func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password
 	})
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to respond to auth challenge: %s", err)
 	}
 
 	return resp.AuthenticationResult

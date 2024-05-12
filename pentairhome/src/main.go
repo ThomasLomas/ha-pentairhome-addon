@@ -56,8 +56,14 @@ func main() {
 
 	device := apiClient.GetDevice(devices[intelliConnectIdx].DeviceID)
 	sendSensorConfig(mqttClient, device)
-	sendSensorData(mqttClient, device)
 
+	sendSensorData(mqttClient, device)
+	pollSensorData(mqttClient, apiClient, device.DeviceID)
+
+	<-mqttClient.Client.Done() // Wait for clean shutdown (cancelling the context triggered the shutdown)
+}
+
+func pollSensorData(mqttClient mqtt.MQTTWrapper, apiClient api.APIClient, deviceId string) {
 	ticker := time.NewTicker(60 * time.Second)
 	quit := make(chan struct{})
 
@@ -65,15 +71,14 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				sendSensorData(mqttClient, apiClient.GetDevice(devices[intelliConnectIdx].DeviceID))
+				device := apiClient.GetDevice(deviceId)
+				sendSensorData(mqttClient, device)
 			case <-quit:
 				ticker.Stop()
 				return
 			}
 		}
 	}()
-
-	<-mqttClient.Client.Done() // Wait for clean shutdown (cancelling the context triggered the shutdown)
 }
 
 func sendSensorConfig(mqttClient mqtt.MQTTWrapper, device api.Device) {

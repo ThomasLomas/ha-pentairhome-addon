@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"strconv"
 )
 
@@ -84,7 +85,7 @@ func (client APIClient) GetDevice(deviceId string) Device {
 
 	var result DeviceResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer
-		panic("Can not unmarshal DeviceResponse JSON")
+		log.Fatalf("failed to unmarshal device response: %s", err)
 	}
 
 	return result.Response.Data[0]
