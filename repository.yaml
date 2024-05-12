@@ -1,5 +1,5 @@
 ---
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
 name: Home Assistant Pentair Home add-on repository
-url: 'https://github.com/ThomasLomas/ha-pentairhome-addon'
+url: "https://github.com/ThomasLomas/ha-pentairhome-addon"
 maintainer: Thomas Lomas <tlomas@gmail.com>
