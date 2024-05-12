@@ -1,0 +1,25 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the example service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+# Add your code here
+
+# Declare variables
+declare pentairhome_username
+declare pentairhome_password
+declare mqtt_host
+declare mqtt_username
+declare mqtt_password
+declare mqtt_port
+
+pentairhome_username=$(bashio::config 'pentairhome_username' "")
+pentairhome_password=$(bashio::config 'pentairhome_password' "")
+mqtt_host=$(bashio::config 'mqtt_host' "$(bashio::services 'mqtt' 'host')")
+mqtt_username=$(bashio::config 'mqtt_username' "$(bashio::services 'mqtt' 'username')")
+mqtt_password=$(bashio::config 'mqtt_password' "$(bashio::services 'mqtt' 'password')")
+mqtt_port=$(bashio::config 'mqtt_port' "$(bashio::services 'mqtt' 'port')")
+
+## Run your program
+exec /usr/bin/pentairhome -mqtt_host "$mqtt_host" -mqtt_port "$mqtt_port" -mqtt_username "$mqtt_username" -mqtt_password "$mqtt_password" -pentairhome_username "$pentairhome_username" -pentairhome_password "$pentairhome_password"
