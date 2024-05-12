@@ -10,7 +10,6 @@ arch:
   - amd64
   - armv7
 init: false
-apparmor: true
 services:
   - mqtt:need
 options:
