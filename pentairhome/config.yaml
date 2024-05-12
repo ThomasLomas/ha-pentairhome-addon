@@ -28,4 +28,3 @@ schema:
   mqtt_password: "str?"
   pentairhome_username: "str"
   pentairhome_password: "str"
-image: "ghcr.io/ThomasLomas/{arch}-pentairhome-addon"
