@@ -1,7 +1,7 @@
 ---
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Pentair Home
-version: "1.0.0"
+version: dev
 slug: pentairhome
 description: An unofficial way to get Pentair Home data into Home Assistant
 url: https://github.com/ThomasLomas/ha-pentairhome-addon
@@ -21,7 +21,7 @@ options:
   pentairhome_username: ""
   pentairhome_password: ""
 map:
-  - config:rw
+  - addon_config:rw
 schema:
   mqtt_host: "str?"
   mqtt_port: "int?"
