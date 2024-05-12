@@ -1,6 +1,9 @@
 ---
 name: Deploy
 
+permissions:
+  contents: write
+
 # yamllint disable-line rule:truthy
 on:
   release:
@@ -187,7 +190,7 @@ jobs:
       - name: 🚀 Dispatch repository updater update signal
         uses: peter-evans/repository-dispatch@v3.0.0
         with:
-          token: ${{ secrets.DISPATCH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ env.OWNER_LC }}/repository-edge
           event-type: update
           client-payload: >
@@ -218,7 +221,7 @@ jobs:
       - name: 🚀 Dispatch repository updater update signal
         uses: peter-evans/repository-dispatch@v3.0.0
         with:
-          token: ${{ secrets.DISPATCH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ env.OWNER_LC }}/repository-beta
           event-type: update
           client-payload: >
@@ -247,7 +250,7 @@ jobs:
       - name: 🚀 Dispatch repository updater update signal
         uses: peter-evans/repository-dispatch@v3.0.0
         with:
-          token: ${{ secrets.DISPATCH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ env.OWNER_LC }}/repository
           event-type: update
           client-payload: >
