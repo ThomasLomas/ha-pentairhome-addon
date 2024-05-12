@@ -1,9 +1,6 @@
 ---
 name: Deploy
 
-permissions:
-  contents: write
-
 # yamllint disable-line rule:truthy
 on:
   release:
