@@ -51,8 +51,6 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
     /usr/bin/pentairhome rm,
 
     /lib/ld-musl* rix,
-    /etc/resolv.conf r
-
     /bin/bash rix,
     /bin/echo ix,
     /etc/passwd r,
