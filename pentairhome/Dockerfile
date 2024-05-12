@@ -1,3 +1,5 @@
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:15.0.6
+
 FROM golang:1.22 as builder
 
 WORKDIR /usr/src/app
@@ -7,12 +9,12 @@ RUN go mod download && go mod verify
 RUN go build -o /usr/bin/pentairhome main.go
 
 # hadolint ignore=DL3006
-FROM ghcr.io/hassio-addons/base:15.0.6
+FROM ${BUILD_FROM}
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat=1.1.0-r4
 
 COPY rootfs /
 COPY --from=builder /usr/bin/pentairhome /usr/bin/pentairhome
