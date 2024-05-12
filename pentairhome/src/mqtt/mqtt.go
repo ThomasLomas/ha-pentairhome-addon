@@ -37,6 +37,8 @@ func (mqttWrapper *MQTTWrapper) Publish(topic string, payload []byte) {
 }
 
 func MakeClient(config MQTTConfig) MQTTWrapper {
+	log.Printf("MQTT Host: %s; Port: %s; Username: %s", config.Host, config.Port, config.Username)
+
 	conn, err := net.Dial("tcp", config.GetServer())
 
 	if err != nil {

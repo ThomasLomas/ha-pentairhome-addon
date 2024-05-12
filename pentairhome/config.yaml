@@ -14,10 +14,6 @@ apparmor: false
 services:
   - mqtt:need
 options:
-  mqtt_host: "127.0.0.1"
-  mqtt_port: 1883
-  mqtt_user: ""
-  mqtt_password: ""
   pentairhome_username: ""
   pentairhome_password: ""
 map:
