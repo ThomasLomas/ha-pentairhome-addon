@@ -1,9 +1,6 @@
 ---
 name: CI
 
-permissions:
-  actions: write
-
 # yamllint disable-line rule:truthy
 on:
   push:
