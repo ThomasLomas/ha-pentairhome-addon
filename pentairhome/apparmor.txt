@@ -36,6 +36,11 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
     # Receive signals from S6-Overlay
     signal (receive) peer=*_pentairhome,
 
+    # Allow access to network
+    network packet,
+    network inet dgram,
+    network inet6 dgram,
+
     # Access to options.json and other files within your addon
     /data/** rw,
 
@@ -45,7 +50,7 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
     # Access required for service functionality
     /usr/bin/pentairhome rm,
 
-    /lib/ld-musl* rix,
+    /lib/ld-musl* r,
     /bin/bash rix,
     /bin/echo ix,
     /etc/passwd r,
