@@ -49,6 +49,7 @@ profile pentairhome flags=(attach_disconnected,mediate_deleted) {
 
     # Access required for service functionality
     /usr/bin/pentairhome rm,
+    /etc/resolv.conf r,
 
     /lib/ld-musl* rix,
     /bin/bash rix,
