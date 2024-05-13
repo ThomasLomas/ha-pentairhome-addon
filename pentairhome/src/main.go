@@ -47,19 +47,7 @@ func main() {
 		panic(err)
 	}
 
-	identity, err := cognito.AuthenticateWithUsernameAndPassword(ctx, runtimeConfiguration.PentairHomeUsername, runtimeConfiguration.PentairHomePassword)
-
-	if err != nil {
-		panic(err)
-	}
-
-	credentials, err := cognito.GetCredentialsFromAuthentication(ctx, identity)
-
-	if err != nil {
-		panic(err)
-	}
-
-	apiClient := api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
+	apiClient := makeApiClient(ctx, *runtimeConfiguration)
 
 	devices, err := apiClient.ListDevices()
 
@@ -89,6 +77,22 @@ func main() {
 	<-mqttClient.Client.Done() // Wait for clean shutdown (cancelling the context triggered the shutdown)
 }
 
+func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfiguration) *api.APIClient {
+	identity, err := cognito.AuthenticateWithUsernameAndPassword(ctx, runtimeConfiguration.PentairHomeUsername, runtimeConfiguration.PentairHomePassword)
+
+	if err != nil {
+		panic(err)
+	}
+
+	credentials, err := cognito.GetCredentialsFromAuthentication(ctx, identity)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
+}
+
 func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, deviceId string) {
 	ticker := time.NewTicker(60 * time.Second)
 
@@ -96,6 +100,13 @@ func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient
 		for {
 			select {
 			case <-ticker.C:
+				defer func() {
+					if r := recover(); r != nil {
+						apiClient = makeApiClient(ctx, *config.FetchRuntimeConfiguration())
+						log.Println("Recovered from panic in sensor data polling")
+					}
+				}()
+
 				device, err := apiClient.GetDevice(deviceId)
 
 				if err != nil {
