@@ -52,9 +52,13 @@ func MakeClient(config MQTTConfig) (*MQTTWrapper, error) {
 		KeepAlive:                     20,
 		CleanStartOnInitialConnection: true,
 		SessionExpiryInterval:         60,
-		OnConnectError:                func(err error) { log.Printf("error whilst attempting connection: %s\n", err) },
+		OnConnectionUp: func(cm *autopaho.ConnectionManager, connAck *paho.Connack) {
+			fmt.Println("mqtt connection up")
+		},
+		OnConnectError: func(err error) { log.Printf("error whilst attempting connection: %s\n", err) },
 		ClientConfig: paho.ClientConfig{
-			ClientID: "pentairhome",
+			ClientID:      "pentairhome",
+			OnClientError: func(err error) { fmt.Printf("client error: %s\n", err) },
 		},
 		ConnectUsername: config.Username,
 		ConnectPassword: []byte(config.Password),

@@ -17,10 +17,11 @@ import (
 	"sort"
 	"syscall"
 	"time"
+
+	"github.com/eclipse/paho.golang/paho"
 )
 
 func main() {
-	// App will run until cancelled by user (e.g. ctrl-c)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -47,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	apiClient := makeApiClient(ctx, *runtimeConfiguration)
+	apiClient := makeApiClient(ctx, runtimeConfiguration)
 
 	devices, err := apiClient.ListDevices()
 
@@ -72,9 +73,9 @@ func main() {
 	sendSensorConfig(mqttClient, device)
 
 	sendSensorData(mqttClient, device)
-	pollSensorData(ctx, mqttClient, apiClient, device.DeviceID)
+	pollSensorData(ctx, mqttClient, apiClient, device.DeviceID, runtimeConfiguration)
 
-	<-mqttClient.Client.Done() // Wait for clean shutdown (cancelling the context triggered the shutdown)
+	<-mqttClient.Client.Done()
 }
 
 func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfiguration) *api.APIClient {
@@ -93,7 +94,7 @@ func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfi
 	return api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
 }
 
-func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, deviceId string) {
+func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, deviceId string, runtimeConfiguration config.RuntimeConfiguration) {
 	ticker := time.NewTicker(60 * time.Second)
 
 	go func() {
@@ -102,8 +103,9 @@ func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient
 			case <-ticker.C:
 				defer func() {
 					if r := recover(); r != nil {
-						apiClient = makeApiClient(ctx, *config.FetchRuntimeConfiguration())
+						apiClient = makeApiClient(ctx, runtimeConfiguration)
 						log.Println("Recovered from panic in sensor data polling")
+						pollSensorData(ctx, mqttClient, apiClient, deviceId, runtimeConfiguration)
 					}
 				}()
 
@@ -125,10 +127,11 @@ func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient
 
 func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 	sensorConfigs := []sensor.SensorConfig{
-		sensor.GenerateSensorConfig(device, "Actual Power", "power", "power"),
-		sensor.GenerateSensorConfig(device, "Actual Speed", "actualspeed", "speed"),
-		sensor.GenerateSensorConfig(device, "Actual Flow", "actualflow", "volume_flow_rate"),
-		sensor.GenerateSensorConfig(device, "Actual Temp", "actualtemp", "temperature"),
+		sensor.GenerateSensorConfig(device, "Pump Power", "power", "power", "W"),
+		sensor.GenerateSensorConfig(device, "Pump Speed", "actualspeed", "speed", "rpm"),
+		sensor.GenerateSensorConfig(device, "Pump Flow", "actualflow", "volume_flow_rate", "gpm"),
+		sensor.GenerateSensorConfig(device, "Water Temperature", "actualtemp", "temperature", "°F"),
+		sensor.GenerateSensorConfig(device, "Outside Temperature", "outsidetemp", "temperature", "°F"),
 	}
 
 	for _, config := range sensorConfigs {
@@ -146,7 +149,7 @@ func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 	}
 }
 
-func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
+func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *api.Device) (pubResp *paho.PublishResponse) {
 	power, err := device.GetActualPower()
 	if err != nil {
 		panic(err)
@@ -167,11 +170,17 @@ func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 		panic(err)
 	}
 
+	outsideTemp, err := device.GetOutsideTemp()
+	if err != nil {
+		panic(err)
+	}
+
 	sensorData := sensor.SensorData{
 		Power:       power,
 		ActualSpeed: actualSpeed,
 		ActualFlow:  actualFlow,
 		ActualTemp:  actualTemp,
+		OutsideTemp: outsideTemp,
 	}
 
 	sensorDataJSON, err := json.Marshal(sensorData)
@@ -181,9 +190,11 @@ func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 	}
 
 	topic := fmt.Sprintf("pentairhome/%s", device.DeviceID)
-	_, err = mqttClient.Publish(topic, sensorDataJSON)
+	pubResp, err = mqttClient.Publish(topic, sensorDataJSON)
 
 	if err != nil {
 		panic(err)
 	}
+
+	return pubResp
 }

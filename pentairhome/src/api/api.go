@@ -16,8 +16,6 @@ import (
 	credentials "github.com/aws/aws-sdk-go-v2/credentials"
 )
 
-const urlBase = "https://api.pentair.cloud/"
-
 type APIClient struct {
 	HttpClient   *http.Client
 	Context      context.Context
@@ -50,7 +48,7 @@ func NewAPIClient(ctx context.Context, idToken, accessKey, secretKey, sessionTok
 	}
 }
 func (client APIClient) MakeRequest(endpoint, method string, body io.Reader) ([]byte, error) {
-	url := fmt.Sprintf("%s%s", urlBase, endpoint)
+	url := fmt.Sprintf("%s%s", "https://api.pentair.cloud/", endpoint)
 	req, err := http.NewRequest(method, url, body)
 
 	if err != nil {

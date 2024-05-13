@@ -61,6 +61,10 @@ func (d Device) GetActualTemp() (float64, error) {
 	return strconv.ParseFloat(d.Fields["t0"].Value, 64)
 }
 
+func (d Device) GetOutsideTemp() (float64, error) {
+	return strconv.ParseFloat(d.Fields["t1"].Value, 64)
+}
+
 type DeviceResponse struct {
 	Response struct {
 		Data []Device `json:"data"`
@@ -83,6 +87,8 @@ func (client APIClient) GetDevice(deviceId string) (*Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get device: %s", err)
 	}
+
+	// println(string(body))
 
 	var result DeviceResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer

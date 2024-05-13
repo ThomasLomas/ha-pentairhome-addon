@@ -39,7 +39,7 @@ func (config *RuntimeConfiguration) ValidateRuntimeConfiguration() []error {
 	return errors
 }
 
-func FetchRuntimeConfiguration() *RuntimeConfiguration {
+func FetchRuntimeConfiguration() RuntimeConfiguration {
 	pentairHomeUsernamePtr := flag.String("pentairhome_username", "", "Pentair Home username")
 	pentairHomePasswordPtr := flag.String("pentairhome_password", "", "Pentair Home password")
 	mqttHostPtr := flag.String("mqtt_host", "", "MQTT host")
@@ -48,7 +48,7 @@ func FetchRuntimeConfiguration() *RuntimeConfiguration {
 	mqttPasswordPtr := flag.String("mqtt_password", "", "MQTT password")
 	flag.Parse()
 
-	return &RuntimeConfiguration{
+	return RuntimeConfiguration{
 		PentairHomeUsername: *pentairHomeUsernamePtr,
 		PentairHomePassword: *pentairHomePasswordPtr,
 		MQTTHost:            *mqttHostPtr,
