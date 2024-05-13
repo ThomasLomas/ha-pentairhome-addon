@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"log"
 )
 
 type RuntimeConfiguration struct {
@@ -15,31 +14,29 @@ type RuntimeConfiguration struct {
 	MQTTPassword        string
 }
 
-func (config *RuntimeConfiguration) ValidateRuntimeConfiguration() {
+func (config *RuntimeConfiguration) ValidateRuntimeConfiguration() []error {
+	var errors []error
+
 	if config.PentairHomeUsername == "" {
-		flag.PrintDefaults()
-		log.Fatal("Pentair Home username is required")
+		errors = append(errors, fmt.Errorf("PentairHomeUsername is required"))
 	}
 	if config.PentairHomePassword == "" {
-		flag.PrintDefaults()
-		log.Fatal("Pentair Home password is required")
+		errors = append(errors, fmt.Errorf("PentairHomePassword is required"))
 	}
 	if config.MQTTHost == "" {
-		flag.PrintDefaults()
-		log.Fatal("MQTT host is required")
+		errors = append(errors, fmt.Errorf("MQTTHost is required"))
 	}
 	if config.MQTTPort == "" {
-		flag.PrintDefaults()
-		log.Fatal("MQTT port is required")
+		errors = append(errors, fmt.Errorf("MQTTPort is required"))
 	}
 	if config.MQTTUsername == "" {
-		flag.PrintDefaults()
-		log.Fatal("MQTT username is required")
+		errors = append(errors, fmt.Errorf("MQTTUsername is required"))
 	}
 	if config.MQTTPassword == "" {
-		flag.PrintDefaults()
-		log.Fatal("MQTT password is required")
+		errors = append(errors, fmt.Errorf("MQTTPassword is required"))
 	}
+
+	return errors
 }
 
 func FetchRuntimeConfiguration() *RuntimeConfiguration {

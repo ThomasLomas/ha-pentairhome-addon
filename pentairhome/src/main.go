@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,15 @@ func main() {
 	defer stop()
 
 	runtimeConfiguration := config.FetchRuntimeConfiguration()
-	runtimeConfiguration.ValidateRuntimeConfiguration()
+	runtimeConfigErrors := runtimeConfiguration.ValidateRuntimeConfiguration()
+
+	if len(runtimeConfigErrors) > 0 {
+		for _, err := range runtimeConfigErrors {
+			log.Println(err)
+		}
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
 	mqttClient := mqtt.MakeClient(mqtt.MQTTConfig{
 		Context:  ctx,

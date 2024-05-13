@@ -38,7 +38,7 @@ func MakeClient(config MQTTConfig) MQTTWrapper {
 
 	u, err := url.Parse(fmt.Sprintf("mqtt://%s:%s", config.Host, config.Port))
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to parse URL: %s", err)
 	}
 
 	cliCfg := autopaho.ClientConfig{
