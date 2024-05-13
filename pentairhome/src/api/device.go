@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"fmt"
 	"strconv"
 )
 
@@ -45,24 +45,20 @@ type Device struct {
 	ReportedDate int64                  `json:"reportedDate"`
 }
 
-func (d Device) GetActualPower() float64 {
-	actualPower, _ := strconv.ParseFloat(d.Fields["ifs3"].Value, 64)
-	return actualPower
+func (d Device) GetActualPower() (float64, error) {
+	return strconv.ParseFloat(d.Fields["ifs3"].Value, 64)
 }
 
-func (d Device) GetActualSpeed() float64 {
-	actualSpeed, _ := strconv.ParseFloat(d.Fields["ifs4"].Value, 64)
-	return actualSpeed
+func (d Device) GetActualSpeed() (float64, error) {
+	return strconv.ParseFloat(d.Fields["ifs4"].Value, 64)
 }
 
-func (d Device) GetActualFlow() float64 {
-	actualFlow, _ := strconv.ParseFloat(d.Fields["ifs6"].Value, 64)
-	return actualFlow
+func (d Device) GetActualFlow() (float64, error) {
+	return strconv.ParseFloat(d.Fields["ifs6"].Value, 64)
 }
 
-func (d Device) GetActualTemp() float64 {
-	actualTemp, _ := strconv.ParseFloat(d.Fields["t0"].Value, 64)
-	return actualTemp
+func (d Device) GetActualTemp() (float64, error) {
+	return strconv.ParseFloat(d.Fields["t0"].Value, 64)
 }
 
 type DeviceResponse struct {
@@ -72,18 +68,30 @@ type DeviceResponse struct {
 	} `json:"response"`
 }
 
-func (client APIClient) GetDevice(deviceId string) Device {
+func (client APIClient) GetDevice(deviceId string) (*Device, error) {
 	deviceRequest := DeviceRequest{
 		DeviceIds: []string{deviceId},
 	}
 
-	jsonData, _ := json.Marshal(deviceRequest)
-	body := client.MakeRequest("device2/device2-service/user/device", "POST", bytes.NewBuffer(jsonData))
+	jsonData, err := json.Marshal(deviceRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal device request: %s", err)
+	}
+
+	body, err := client.MakeRequest("device2/device2-service/user/device", "POST", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get device: %s", err)
+	}
 
 	var result DeviceResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer
-		log.Fatalf("failed to unmarshal device response: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal device response: %s", err)
 	}
 
-	return result.Response.Data[0]
+	if len(result.Response.Data) == 0 {
+		return nil, fmt.Errorf("device not found: %s", deviceId)
+	}
+
+	return &result.Response.Data[0], nil
 }

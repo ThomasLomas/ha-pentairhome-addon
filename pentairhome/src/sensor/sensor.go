@@ -26,7 +26,7 @@ type SensorData struct {
 	ActualTemp  float64 `json:"actualtemp"`
 }
 
-func GenerateSensorConfig(device api.Device, sensorName, sensorID, deviceClass string) SensorConfig {
+func GenerateSensorConfig(device *api.Device, sensorName, sensorID, deviceClass string) SensorConfig {
 	return SensorConfig{
 		Name:          sensorName,
 		UniqueID:      fmt.Sprintf("ph_%s_%s", device.DeviceID, sensorID),

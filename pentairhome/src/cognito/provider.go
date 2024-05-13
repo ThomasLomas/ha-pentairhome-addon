@@ -2,7 +2,7 @@ package cognito
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"pentairhome/config"
 	"time"
 
@@ -13,10 +13,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password string) *types.AuthenticationResultType {
+func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password string) (*types.AuthenticationResultType, error) {
 	configuration := config.FetchConfiguration()
 
-	csrp, _ := cognitosrp.NewCognitoSRP(
+	csrp, err := cognitosrp.NewCognitoSRP(
 		username,
 		password,
 		configuration.AWSUserPoolID,
@@ -24,11 +24,19 @@ func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password
 		nil,
 	)
 
-	cfg, _ := awsConfig.LoadDefaultConfig(
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cognito srp: %s", err)
+	}
+
+	cfg, err := awsConfig.LoadDefaultConfig(
 		ctx,
 		awsConfig.WithRegion(config.FetchConfiguration().AWSRegion),
 		awsConfig.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to load configuration: %s", err)
+	}
 
 	cipClient := cip.NewFromConfig(cfg)
 
@@ -39,14 +47,18 @@ func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password
 	})
 
 	if err != nil {
-		log.Fatalf("failed to initiate auth: %s", err)
+		return nil, fmt.Errorf("failed to initiate auth: %s", err)
 	}
 
 	if authResp.ChallengeName != types.ChallengeNameTypePasswordVerifier {
-		log.Fatalf("unexpected challenge name: %s", authResp.ChallengeName)
+		return nil, fmt.Errorf("unexpected challenge name: %s", authResp.ChallengeName)
 	}
 
-	challengeResponses, _ := csrp.PasswordVerifierChallenge(authResp.ChallengeParameters, time.Now())
+	challengeResponses, err := csrp.PasswordVerifierChallenge(authResp.ChallengeParameters, time.Now())
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to respond to password verifier challenge: %s", err)
+	}
 
 	resp, err := cipClient.RespondToAuthChallenge(ctx, &cip.RespondToAuthChallengeInput{
 		ChallengeName:      types.ChallengeNameTypePasswordVerifier,
@@ -55,8 +67,8 @@ func AuthenticateWithUsernameAndPassword(ctx context.Context, username, password
 	})
 
 	if err != nil {
-		log.Fatalf("failed to respond to auth challenge: %s", err)
+		return nil, fmt.Errorf("failed to respond to auth challenge: %s", err)
 	}
 
-	return resp.AuthenticationResult
+	return resp.AuthenticationResult, nil
 }

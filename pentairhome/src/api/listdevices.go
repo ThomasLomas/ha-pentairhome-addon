@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 )
 
 type ListDevice struct {
@@ -26,13 +26,17 @@ type ListDevicesResponse struct {
 	Msgs            []any        `json:"msgs"`
 }
 
-func (client APIClient) ListDevices() []ListDevice {
-	body := client.MakeRequest("device2/device2-service/user/listdevices", "GET", nil)
+func (client APIClient) ListDevices() ([]ListDevice, error) {
+	body, bodyErr := client.MakeRequest("device2/device2-service/user/listdevices", "GET", nil)
+
+	if bodyErr != nil {
+		return nil, fmt.Errorf("failed to list devices: %s", bodyErr)
+	}
 
 	var result ListDevicesResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer
-		log.Fatalf("failed to unmarshal list devices response: %s", err)
+		return nil, fmt.Errorf("failed to unmarshal list devices response: %s", err)
 	}
 
-	return result.Response
+	return result.Response, nil
 }

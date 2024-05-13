@@ -23,22 +23,28 @@ type MQTTWrapper struct {
 	Context context.Context
 }
 
-func (mqttWrapper *MQTTWrapper) Publish(topic string, payload []byte) {
+func (mqttWrapper *MQTTWrapper) Publish(topic string, payload []byte) (*paho.PublishResponse, error) {
 	log.Printf("publishing data to topic: %s", topic)
 
-	mqttWrapper.Client.Publish(mqttWrapper.Context, &paho.Publish{
+	resp, err := mqttWrapper.Client.Publish(mqttWrapper.Context, &paho.Publish{
 		Topic:   topic,
 		QoS:     byte(0),
 		Payload: payload,
 	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to publish message: %s", err)
+	}
+
+	return resp, nil
 }
 
-func MakeClient(config MQTTConfig) MQTTWrapper {
+func MakeClient(config MQTTConfig) (*MQTTWrapper, error) {
 	log.Printf("MQTT Host: %s; Port: %s; Username: %s", config.Host, config.Port, config.Username)
 
 	u, err := url.Parse(fmt.Sprintf("mqtt://%s:%s", config.Host, config.Port))
 	if err != nil {
-		log.Fatalf("failed to parse URL: %s", err)
+		return nil, fmt.Errorf("failed to parse URL: %s", err)
 	}
 
 	cliCfg := autopaho.ClientConfig{
@@ -57,17 +63,17 @@ func MakeClient(config MQTTConfig) MQTTWrapper {
 	c, err := autopaho.NewConnection(config.Context, cliCfg)
 
 	if err != nil {
-		log.Fatalf("failed to create connection: %s", err)
+		return nil, fmt.Errorf("failed to create connection: %s", err)
 	}
 
 	if err = c.AwaitConnection(config.Context); err != nil {
-		log.Fatalf("failed to connect: %s", err)
+		return nil, fmt.Errorf("failed to connect: %s", err)
 	}
 
 	fmt.Printf("Connected to %s\n", u)
 
-	return MQTTWrapper{
+	return &MQTTWrapper{
 		Client:  c,
 		Context: config.Context,
-	}
+	}, nil
 }
