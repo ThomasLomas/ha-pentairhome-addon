@@ -21,6 +21,6 @@ schema:
   mqtt_host: "str?"
   mqtt_port: "int?"
   mqtt_user: "str?"
-  mqtt_password: "str?"
+  mqtt_password: "password?"
   pentairhome_username: "str"
-  pentairhome_password: "str"
+  pentairhome_password: "password"
