@@ -19,8 +19,9 @@ type MQTTConfig struct {
 }
 
 type MQTTWrapper struct {
-	Client  *autopaho.ConnectionManager
-	Context context.Context
+	Client         *autopaho.ConnectionManager
+	Context        context.Context
+	StatusMessages chan string
 }
 
 func (mqttWrapper *MQTTWrapper) Publish(topic string, payload []byte) (*paho.PublishResponse, error) {
@@ -47,6 +48,8 @@ func MakeClient(config MQTTConfig) (*MQTTWrapper, error) {
 		return nil, fmt.Errorf("failed to parse URL: %s", err)
 	}
 
+	statusMessages := make(chan string, 1)
+
 	cliCfg := autopaho.ClientConfig{
 		ServerUrls:                    []*url.URL{u},
 		KeepAlive:                     20,
@@ -54,11 +57,36 @@ func MakeClient(config MQTTConfig) (*MQTTWrapper, error) {
 		SessionExpiryInterval:         60,
 		OnConnectionUp: func(cm *autopaho.ConnectionManager, connAck *paho.Connack) {
 			fmt.Println("mqtt connection up")
+
+			if _, err := cm.Subscribe(config.Context, &paho.Subscribe{
+				Subscriptions: []paho.SubscribeOptions{
+					{
+						Topic: "homeassistant/status",
+						QoS:   byte(0),
+					},
+				},
+			}); err != nil {
+				log.Printf("failed to subscribe (%s). This is likely to mean homeassistant restarts will require manual addon restart.", err)
+				return
+			}
+
+			log.Println("subscribed to homeassistant/status")
 		},
 		OnConnectError: func(err error) { log.Printf("error whilst attempting connection: %s\n", err) },
 		ClientConfig: paho.ClientConfig{
 			ClientID:      "pentairhome",
 			OnClientError: func(err error) { fmt.Printf("client error: %s\n", err) },
+			OnPublishReceived: []func(paho.PublishReceived) (bool, error){
+				func(pr paho.PublishReceived) (bool, error) {
+					msg := pr.Packet
+
+					if msg.Topic == "homeassistant/status" {
+						statusMessages <- string(msg.Payload)
+					}
+
+					return true, nil
+				},
+			},
 		},
 		ConnectUsername: config.Username,
 		ConnectPassword: []byte(config.Password),
@@ -77,7 +105,8 @@ func MakeClient(config MQTTConfig) (*MQTTWrapper, error) {
 	fmt.Printf("Connected to %s\n", u)
 
 	return &MQTTWrapper{
-		Client:  c,
-		Context: config.Context,
+		Client:         c,
+		Context:        config.Context,
+		StatusMessages: statusMessages,
 	}, nil
 }

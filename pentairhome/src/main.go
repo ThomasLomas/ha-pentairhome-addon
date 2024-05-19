@@ -36,18 +36,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	mqttClient, err := mqtt.MakeClient(mqtt.MQTTConfig{
-		Context:  ctx,
-		Host:     runtimeConfiguration.MQTTHost,
-		Port:     runtimeConfiguration.MQTTPort,
-		Username: runtimeConfiguration.MQTTUsername,
-		Password: runtimeConfiguration.MQTTPassword,
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
 	apiClient := makeApiClient(ctx, runtimeConfiguration)
 
 	devices, err := apiClient.ListDevices()
@@ -64,16 +52,29 @@ func main() {
 		panic(errors.New("no IntelliConnect devices found"))
 	}
 
-	device, err := apiClient.GetDevice(devices[intelliConnectIdx].DeviceID)
+	device, deviceErr := apiClient.GetDevice(devices[intelliConnectIdx].DeviceID)
 
-	if err != nil {
-		panic(err)
+	if deviceErr != nil {
+		log.Panicf("failed to get IntelliConnect device: %s", deviceErr)
+	}
+
+	mqttClient, mqttErr := mqtt.MakeClient(mqtt.MQTTConfig{
+		Context:  ctx,
+		Host:     runtimeConfiguration.MQTTHost,
+		Port:     runtimeConfiguration.MQTTPort,
+		Username: runtimeConfiguration.MQTTUsername,
+		Password: runtimeConfiguration.MQTTPassword,
+	})
+
+	if mqttErr != nil {
+		log.Panicf("failed to create MQTT client: %s", mqttErr)
 	}
 
 	sendSensorConfig(mqttClient, device)
-
 	sendSensorData(mqttClient, device)
-	pollSensorData(ctx, mqttClient, apiClient, device.DeviceID, runtimeConfiguration)
+
+	pollSensorData(ctx, mqttClient, apiClient, device, runtimeConfiguration)
+	listenForStatusMessages(ctx, mqttClient, apiClient, device, runtimeConfiguration)
 
 	<-mqttClient.Client.Done()
 }
@@ -94,7 +95,36 @@ func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfi
 	return api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
 }
 
-func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, deviceId string, runtimeConfiguration config.RuntimeConfiguration) {
+func listenForStatusMessages(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, device *api.Device, runtimeConfiguration config.RuntimeConfiguration) {
+	go func() {
+		for {
+			select {
+			case statusMessage := <-mqttClient.StatusMessages:
+				log.Printf("Received status message: %s", statusMessage)
+				if statusMessage == "online" {
+					log.Println("Home Assistant is online")
+
+					defer func() {
+						if r := recover(); r != nil {
+							log.Println("Recovered from panic in listening for status messages. Making new API client and listening again.")
+							apiClient = makeApiClient(ctx, runtimeConfiguration)
+							listenForStatusMessages(ctx, mqttClient, apiClient, device, runtimeConfiguration)
+							mqttClient.StatusMessages <- statusMessage
+						}
+					}()
+
+					log.Printf("Sending sensor config for device: %s", device.DeviceID)
+					sendSensorConfig(mqttClient, device)
+				}
+			case <-ctx.Done():
+				log.Println("Shutting down status message listener")
+				return
+			}
+		}
+	}()
+}
+
+func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, device *api.Device, runtimeConfiguration config.RuntimeConfiguration) {
 	ticker := time.NewTicker(60 * time.Second)
 
 	go func() {
@@ -103,13 +133,13 @@ func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient
 			case <-ticker.C:
 				defer func() {
 					if r := recover(); r != nil {
+						log.Println("Recovered from panic in sensor data polling. Making new API client and restarting polling.")
 						apiClient = makeApiClient(ctx, runtimeConfiguration)
-						log.Println("Recovered from panic in sensor data polling")
-						pollSensorData(ctx, mqttClient, apiClient, deviceId, runtimeConfiguration)
+						pollSensorData(ctx, mqttClient, apiClient, device, runtimeConfiguration)
 					}
 				}()
 
-				device, err := apiClient.GetDevice(deviceId)
+				device, err := apiClient.GetDevice(device.DeviceID)
 
 				if err != nil {
 					panic(err)
@@ -141,10 +171,10 @@ func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 		}
 
 		topic := fmt.Sprintf("homeassistant/sensor/%s/config", config.UniqueID)
-		_, err = mqttClient.Publish(topic, message)
-
-		if err != nil {
+		if _, err = mqttClient.Publish(topic, message); err != nil {
 			panic(err)
+		} else {
+			log.Printf("Published sensor config to %s", topic)
 		}
 	}
 }
