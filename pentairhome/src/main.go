@@ -159,7 +159,7 @@ func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 	sensorConfigs := []sensor.SensorConfig{
 		sensor.GenerateSensorConfig(device, "Pump Power", "power", "power", "W"),
 		sensor.GenerateSensorConfig(device, "Pump Speed", "actualspeed", "speed", "rpm"),
-		sensor.GenerateSensorConfig(device, "Pump Flow", "actualflow", "volume_flow_rate", "gpm"),
+		sensor.GenerateSensorConfig(device, "Pump Flow", "actualflow", "volume_flow_rate", "gal/min"),
 		sensor.GenerateSensorConfig(device, "Water Temperature", "actualtemp", "temperature", "°F"),
 		sensor.GenerateSensorConfig(device, "Outside Temperature", "outsidetemp", "temperature", "°F"),
 	}
