@@ -1,4 +1,4 @@
-package api
+package pentaircloud
 
 import (
 	"bytes"
@@ -87,8 +87,6 @@ func (client APIClient) GetDevice(deviceId string) (*Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get device: %s", err)
 	}
-
-	// println(string(body))
 
 	var result DeviceResponse
 	if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to the go struct pointer

@@ -5,8 +5,7 @@ FROM golang:1.22 as builder
 WORKDIR /usr/src/app
 COPY src/. ./
 
-RUN go mod download && go mod verify
-RUN go build -o /usr/bin/pentairhome main.go
+RUN go mod download && go mod verify && go build -o /usr/bin/pentairhome main.go
 
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}

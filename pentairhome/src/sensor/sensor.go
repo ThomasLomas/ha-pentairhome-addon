@@ -2,7 +2,7 @@ package sensor
 
 import (
 	"fmt"
-	"pentairhome/api"
+	"pentairhome/pentaircloud"
 )
 
 type DiscoveryDevice struct {
@@ -30,7 +30,7 @@ type SensorData struct {
 	OutsideTemp float64 `json:"outsidetemp"`
 }
 
-func GenerateSensorConfig(device *api.Device, sensorName, sensorID, deviceClass, unitOfMeasurement string) SensorConfig {
+func GenerateSensorConfig(device *pentaircloud.Device, sensorName, sensorID, deviceClass, unitOfMeasurement string) SensorConfig {
 	return SensorConfig{
 		Name:              sensorName,
 		UniqueID:          fmt.Sprintf("ph_%s_%s", device.DeviceID, sensorID),

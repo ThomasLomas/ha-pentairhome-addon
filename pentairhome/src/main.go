@@ -9,10 +9,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"pentairhome/api"
 	"pentairhome/cognito"
 	"pentairhome/config"
 	"pentairhome/mqtt"
+	"pentairhome/pentaircloud"
 	"pentairhome/sensor"
 	"sort"
 	"syscall"
@@ -79,7 +79,7 @@ func main() {
 	<-mqttClient.Client.Done()
 }
 
-func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfiguration) *api.APIClient {
+func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfiguration) *pentaircloud.APIClient {
 	identity, err := cognito.AuthenticateWithUsernameAndPassword(ctx, runtimeConfiguration.PentairHomeUsername, runtimeConfiguration.PentairHomePassword)
 
 	if err != nil {
@@ -92,10 +92,10 @@ func makeApiClient(ctx context.Context, runtimeConfiguration config.RuntimeConfi
 		panic(err)
 	}
 
-	return api.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
+	return pentaircloud.NewAPIClient(ctx, *identity.IdToken, *credentials.AccessKeyId, *credentials.SecretKey, *credentials.SessionToken)
 }
 
-func listenForStatusMessages(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, device *api.Device, runtimeConfiguration config.RuntimeConfiguration) {
+func listenForStatusMessages(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *pentaircloud.APIClient, device *pentaircloud.Device, runtimeConfiguration config.RuntimeConfiguration) {
 	go func() {
 		for {
 			select {
@@ -124,7 +124,7 @@ func listenForStatusMessages(ctx context.Context, mqttClient *mqtt.MQTTWrapper, 
 	}()
 }
 
-func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *api.APIClient, device *api.Device, runtimeConfiguration config.RuntimeConfiguration) {
+func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient *pentaircloud.APIClient, device *pentaircloud.Device, runtimeConfiguration config.RuntimeConfiguration) {
 	ticker := time.NewTicker(60 * time.Second)
 
 	go func() {
@@ -155,7 +155,7 @@ func pollSensorData(ctx context.Context, mqttClient *mqtt.MQTTWrapper, apiClient
 	}()
 }
 
-func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
+func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *pentaircloud.Device) {
 	sensorConfigs := []sensor.SensorConfig{
 		sensor.GenerateSensorConfig(device, "Pump Power", "power", "power", "W"),
 		sensor.GenerateSensorConfig(device, "Pump Speed", "actualspeed", "speed", "rpm"),
@@ -179,7 +179,7 @@ func sendSensorConfig(mqttClient *mqtt.MQTTWrapper, device *api.Device) {
 	}
 }
 
-func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *api.Device) (pubResp *paho.PublishResponse) {
+func sendSensorData(mqttClient *mqtt.MQTTWrapper, device *pentaircloud.Device) (pubResp *paho.PublishResponse) {
 	power, err := device.GetActualPower()
 	if err != nil {
 		panic(err)
