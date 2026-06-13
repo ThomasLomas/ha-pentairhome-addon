@@ -1,6 +1,6 @@
 module pentairhome
 
-go 1.22.2
+go 1.26.4
 
 require (
 	github.com/alexrudd/cognito-srp/v4 v4.1.0

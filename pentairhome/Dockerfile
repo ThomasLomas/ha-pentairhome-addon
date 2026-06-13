@@ -1,6 +1,6 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:15.0.6
+ARG BUILD_FROM=ghcr.io/home-assistant/base:3.23
 
-FROM golang:1.22 as builder
+FROM golang:1.26.4 as builder
 
 WORKDIR /usr/src/app
 COPY src/. ./
@@ -19,19 +19,8 @@ COPY rootfs /
 COPY --from=builder /usr/bin/pentairhome /usr/bin/pentairhome
 RUN chmod +x /usr/bin/pentairhome
 
-# Build arguments
-ARG BUILD_ARCH
-ARG BUILD_DATE
-ARG BUILD_DESCRIPTION
-ARG BUILD_NAME
-ARG BUILD_REF
-ARG BUILD_REPOSITORY
-ARG BUILD_VERSION
-
-# Labels
 LABEL \
-    io.hass.name="${BUILD_NAME}" \
-    io.hass.description="${BUILD_DESCRIPTION}" \
-    io.hass.arch="${BUILD_ARCH}" \
-    io.hass.type="addon" \
-    io.hass.version=${BUILD_VERSION}
+    org.opencontainers.image.title="Home Assistant Pentair Home" \
+    org.opencontainers.image.description="This hardly works and is not affiliated with Pentair." \
+    org.opencontainers.image.source="https://github.com/ThomasLomas/ha-pentairhome-addon" \
+    org.opencontainers.image.licenses="Apache License 2.0"
